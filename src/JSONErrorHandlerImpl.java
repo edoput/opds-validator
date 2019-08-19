@@ -1,6 +1,8 @@
 package com.feedbooks.opds;
 
 import java.util.ResourceBundle;
+import java.util.List;
+import java.util.ArrayList;
 import java.text.MessageFormat;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -13,14 +15,14 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.SAXException;
 import com.thaiopensource.util.UriOrFile;
 
-import org.json.*;
+import net.sf.json.*;
 
 public class JSONErrorHandlerImpl extends ErrorHandlerImpl {
 	private final String bundleName
 		= "com.thaiopensource.xml.sax.resources.Messages";
 
 	private ResourceBundle bundle = null;
-	private JSONArray errors;
+	private List<JSONObject> errors;
 
 	public JSONErrorHandlerImpl() {
 		this(System.err);
@@ -28,24 +30,18 @@ public class JSONErrorHandlerImpl extends ErrorHandlerImpl {
 
 	public JSONErrorHandlerImpl(OutputStream os) {
 		super(os);
-		errors=new JSONArray();
+		errors = new ArrayList<JSONObject>();
 	}
 
 	public JSONErrorHandlerImpl(Writer w) {
 		super(w);
-		errors=new JSONArray();
+		errors=new ArrayList<JSONObject>();
 	}
 
 	public void close() {
-		String txt="";
-		try {
-			txt=errors.toString(3);
-		}catch(JSONException e){
-			txt="Failed JSON Serialization "+e.getMessage();
-		}
-
-
-		super.print(txt); 	
+                JSONArray serialized_errors = JSONArray.fromObject(errors);
+                System.out.println(serialized_errors);
+		//super.print(serialized_errors);
 	}
 
 
@@ -66,12 +62,13 @@ public class JSONErrorHandlerImpl extends ErrorHandlerImpl {
 		if (e instanceof SAXException)
 			printSAXParseException("fatal",(SAXParseException)e);
 		else
-			print("fatal :"+formatMessage(e));
+			System.err.println("fatal :"+formatMessage(e));
 	}
 
 	public void print(String message) {
 		if (message.length() != 0) {
-			errors.put(message);
+                        System.out.println(message);
+			//errors.add(message);
 		}
 	}
 
@@ -86,29 +83,22 @@ public class JSONErrorHandlerImpl extends ErrorHandlerImpl {
 	}
 
 	private void printSAXParseException(String severity,SAXParseException e){
+                JSONObject ret = new JSONObject().element("severity",severity);
 
-		try{
-			JSONObject ret=new JSONObject().put("severity",severity);
-
-			String systemId = e.getSystemId();
-			if (systemId!=null){
-				ret.put("location", UriOrFile.uriToUriOrFile(systemId));
-			}
-			int n = e.getLineNumber();
-			if (n>=0){
-				ret.put("line",new Integer(n));
-			}
-			n = e.getColumnNumber();
-			if (n>=0){
-				ret.put("column",new Integer(n));
-			}
-			ret.put("message",formatMessage(e));
-			errors.put(ret);
-
-		}catch(JSONException ep){
-			print("JSON Object failed");
-		}
-
+                String systemId = e.getSystemId();
+                if (systemId!=null){
+                        ret.put("location", UriOrFile.uriToUriOrFile(systemId));
+                }
+                int n = e.getLineNumber();
+                if (n>=0){
+                        ret.put("line",new Integer(n));
+                }
+                n = e.getColumnNumber();
+                if (n>=0){
+                        ret.put("column",new Integer(n));
+                }
+                ret.put("message",formatMessage(e));
+                errors.add(ret);
 	}
 	private String formatLocation(SAXParseException e) {
 		String systemId = e.getSystemId();
