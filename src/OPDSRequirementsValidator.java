@@ -9,51 +9,67 @@ import com.thaiopensource.xml.sax.CountingErrorHandler;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.io.IOException;
 
 public class OPDSRequirementsValidator {
 
 
 	public boolean validate(InputSource l)  {
-		try{
+                OPDSRequirementFilter[] filters={
+                        /*Very high priority*/
+                        new OPDSRequirementLink(),
+                        new OPDSRequirementAcquisitionType(),
+                        new OPDSRequirementSearchRel(),
+                        new OPDSRequirementAcquisitionOrNavigation(),
+                        /*High priority*/
+                        new OPDSRequirementPlainTextSummary(),
+                        new OPDSRequirementImageRel(),
+                        new OPDSRequirementImageBitmap(),
+                        new OPDSRequirementDublinCore(),
+                        /*Normal priority*/ 
+                        new OPDSRequirementContentDuplication(),
+                        new OPDSRequirementRootLink(),
+                        new OPDSRequirementLinkProfileKind()
+                };
 
-			OPDSRequirementFilter[] filters={
-				/*Very high priority*/
-				new OPDSRequirementLink(),new OPDSRequirementAcquisitionType(), new OPDSRequirementSearchRel(),new OPDSRequirementAcquisitionOrNavigation(),
-				/*High priority*/
-				new OPDSRequirementPlainTextSummary(), new OPDSRequirementImageRel(), new OPDSRequirementImageBitmap(), new OPDSRequirementDublinCore(),
-				/*Normal priority*/ 
-				new OPDSRequirementContentDuplication(), new OPDSRequirementRootLink(), new OPDSRequirementLinkProfileKind()
-			};
+                for(OPDSRequirementFilter f:filters )
+                {
+                        f.setOPDSVersion(getOPDSVersion());
+                }
 
-			for(OPDSRequirementFilter f:filters )
-			{
-				f.setOPDSVersion(getOPDSVersion());
-			}
-
-			XMLFilter tail = filters[0];
-			XMLFilter head = tail;
+                XMLFilter tail = filters[0];
+                XMLFilter head = tail;
 
 
-			for(int i=1;i<filters.length;i++ ) {
-				XMLFilter new_tail = filters[i];
-				tail.setParent(new_tail);
-				tail=new_tail;
-			}
+                for(int i=1;i<filters.length;i++ ) {
+                        XMLFilter new_tail = filters[i];
+                        tail.setParent(new_tail);
+                        tail=new_tail;
+                }
 
-			tail.setParent(XMLReaderFactory.createXMLReader());
-			CountingErrorHandler eh=null;
-			if (getErrorHandler()!=null) {
-				eh=new CountingErrorHandler(getErrorHandler());
-			}else{
-				eh=new CountingErrorHandler(new DefaultHandler());
-			}
-			head.setErrorHandler(eh);
-			head.parse(l);
-			return !eh.getHadErrorOrFatalError();
-		}catch(Exception e){
-			System.err.println(e);
-		}
-		return false;
+                try {
+                        tail.setParent(XMLReaderFactory.createXMLReader());
+                } catch (SAXException e) {
+                        System.err.println(e);
+                        System.exit(1);
+                }
+                CountingErrorHandler eh=null;
+                if (getErrorHandler()!=null) {
+                        eh=new CountingErrorHandler(getErrorHandler());
+                }else{
+                        eh=new CountingErrorHandler(new DefaultHandler());
+                }
+                head.setErrorHandler(eh);
+                try {
+                        head.parse(l);
+                } catch (SAXException e) {
+                        System.err.println(e);
+                        System.exit(1);
+                } catch (IOException e) {
+                        System.err.println(e);
+                        System.exit(1);
+                }
+                return !eh.getHadErrorOrFatalError();
 	}
 
 	private ErrorHandler eh;
