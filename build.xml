@@ -1,7 +1,22 @@
 <project name="OPDSValidator" default="all">
+        <description>OPDS feed validator command line utility</description>
+        <property name="src" location="src"/>
+        <property name="dest" location="classes"/>
+        <property name="java-system-libraries" location="/usr/share/java"/>
+
 	<target name="build" >
 		<mkdir dir="classes"/>
-		<javac  includeantruntime="false"  classpath="classes:/usr/share/jing/lib/jing.jar:/usr/share/relaxng-datatype/lib/relaxngDatatype.jar" srcdir="src" destdir="classes" excludes="json/test/**">
+                <javac
+                        destdir="${dest}"
+                        includeAntRuntime="false"
+                        srcdir="${src}"
+                        excludes="json/test/**">
+                        <classpath>
+                                <pathelement path="${java-system-libraries}/json-lib.jar"/>
+                                <pathelement path="${java-system-libraries}/jing.jar"/>
+                                <pathelement path="${java-system-libraries}/relaxngDatatype.jar"/>
+                        </classpath>
+                        <compilerarg value="-Xlint"/>
 		</javac>
 	</target>
 
@@ -9,7 +24,7 @@
 		<jar basedir="classes" destfile="OPDSValidator.jar" excludes=".gitignore">
 			<manifest>
 				<attribute name="Main-Class" value="com.feedbooks.opds.Validator"/>
-				<attribute name="Class-Path" value="jing.jar relaxngDatatype.jar"/>
+                                <attribute name="Class-Path" value="${java-system-libraries}/jing.jar ${java-system-libraries}/relaxngDatatype.jar ${java-system-libraries}/json-lib.jar"/>
 			</manifest>
 		</jar>
 	</target>
