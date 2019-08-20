@@ -5,23 +5,25 @@ This program is a specialized validator for the Open Publication Distribution Sy
 It's based on Jing (http://code.google.com/p/jing-trang/).
 
 
-Compile
--------
+Build
+-----
 
-The validator depends on jing and relaxng-datatype jars which at the moment should be located : 
+On debian the dependencies are available as packages
 
+```bash
+apt install libjing-java libjson-java librelaxng-datatype-java
 ```
-/usr/share/jing/lib/jing.jar
-/usr/share/relaxng-datatype/lib/relaxngDatatype.jar
+
+```bash
+ant
 ```
-
-Compilation should be as easy as  
-
- `$ ant`
 
 Usage
 -----
-```
+
+You can either point it to a OPDS feed file or pipe the feed
+
+```bash
  usage: java -jar OPDSValidator [options] file
  Options:
  -h              This help message
